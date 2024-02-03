@@ -5,6 +5,7 @@ import * as OBC from "openbim-components"
 import * as THREE from "three"
 import { AlignTool } from "../openbim-tools/align"
 import { FragmentsGroup } from "bim-fragment"
+import { threadId } from "worker_threads"
 interface Props {
     
 }
@@ -58,10 +59,40 @@ export function IFCViewer(props: Props) {
         renderer.setPixelRatio( window.devicePixelRatio );
         
         
+        
         viewer.renderer = rendererComponent as unknown as OBC.SimpleRenderer
         
         const cameraComponent = new OBC.OrthoPerspectiveCamera(viewer)
+
+        
+       
+        
         viewer.camera = cameraComponent
+
+        
+
+        //viewer.camera.
+
+        function updateCameraPosition(cameraComponent: OBC.OrthoPerspectiveCamera, position: THREE.Points, target: THREE.Points){
+
+            cameraComponent.controls.setPosition(position.position.x,position.position.y, position.position.z, false)
+            cameraComponent.controls.setTarget(target.position.x, target.position.y, target.position.z)
+            
+            //cameraComponent.get(OBC.)
+            const projectionType = cameraComponent.getProjection() as OBC.CameraProjection
+            console.log(projectionType)
+            //if(projectionType)
+            if(cameraComponent.activeCamera.toString() === "THREE.PerspectiveCamera")
+                cameraComponent.get().far = .1
+            //cameraComponent.activeCamera = "PerspectiveCamera"
+        }
+        
+        const position = new THREE.Points()
+        const target = new THREE.Points()
+        
+        updateCameraPosition(cameraComponent, position, target)
+
+
     
         const raycasterComponent = new OBC.SimpleRaycaster(viewer)
         viewer.raycaster = raycasterComponent
@@ -74,6 +105,11 @@ export function IFCViewer(props: Props) {
         
         const ifcLoader = new OBC.FragmentIfcLoader(viewer)
         await ifcLoader.setup()
+
+        //const file = await fetch("1161196_ZSTH_AP_A3_4_N_LRP_01_BH_TUS.ifc")
+        //const data = await file.arrayBuffer()
+        //const buffer = new Uint8Array(data)
+        //const model = await ifcLoader.load(buffer, "")
 
         const highlighter = new OBC.FragmentHighlighter(viewer)
         await highlighter.setup()
@@ -145,7 +181,7 @@ export function IFCViewer(props: Props) {
         viewer.ui.addToolbar(mainToolbar)
 
         //const scene = sceneComponent.get()
-        const clipper = new OBC.EdgesClipper(viewer);
+        const clipper = new OBC.EdgesClipper(  viewer );
 
         clipper.enabled = true;
         viewerContainer.ondblclick = () => clipper.create();
