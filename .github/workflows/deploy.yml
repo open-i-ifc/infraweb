@@ -6,6 +6,9 @@ on:
       - main
 jobs:
   deploy:
+    defaults:
+      run:
+        working-directory: ./app
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     steps:
