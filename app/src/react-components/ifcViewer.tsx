@@ -3,10 +3,11 @@ import * as OBC from "openbim-components"
 import { AlignTool } from "../openbim-tools/align"
 import { FragmentsGroup } from "bim-fragment"
 import * as THREE from "three"
+import { useState } from "react"
 interface Props {
 
 }
-const pointsData: {[key: string]: any} = require('../points.json');
+const pointsData: { [key: string]: any } = require('../points.json');
 
 
 interface IViewerContext {
@@ -39,12 +40,24 @@ export function IFCViewer(props: Props) {
     let viewer: OBC.Components
     let scene
 
+    let [index, setIndex] = useState(50)
+    const [crv, setCrv] = useState<THREE.CatmullRomCurve3 | null>(null);
+    const [clipper, setClipper] = useState<OBC.EdgesClipper | null>(null);
+
+    // const fetched = await fetch("file/url");
+    // const arrayBuffer = await fetched.arrayBuffer();
+    // const buffer = new Uint8Array(arrayBuffer);
+
+    // ifcLoader.load(buffer, "name")
+
+
     const createViewer = async () => {
 
         let modelMatrix: THREE.Matrix4
 
         viewer = new OBC.Components()
         setViewer(viewer)
+
 
         const sceneComponent = new OBC.SimpleScene(viewer)
         sceneComponent.setup()
@@ -93,9 +106,12 @@ export function IFCViewer(props: Props) {
             alignTool.setModel(model)
         }
 
+        //const scene = sceneComponent.get()
+
+
         ifcLoader.onIfcLoaded.add(async (model) => {
             modelMatrix = model.coordinationMatrix
-            drawAxis(modelMatrix)
+            await drawAxis(modelMatrix)
 
             for (const fragment of model.items) { culler.add(fragment.mesh) }
             propertiesProcessor.process(model)
@@ -107,8 +123,14 @@ export function IFCViewer(props: Props) {
             // highlighter.update()
             culler.needsUpdate = true
             onModelLoaded(model)
-        })
 
+            const localClipper = new OBC.EdgesClipper(viewer);
+
+            localClipper.enabled = true;
+
+            setClipper(localClipper)
+
+        })
 
         const alignTool = new AlignTool(viewer)
 
@@ -121,46 +143,76 @@ export function IFCViewer(props: Props) {
 
         viewer.ui.addToolbar(mainToolbar)
 
-        //const scene = sceneComponent.get()
-        const clipper = new OBC.EdgesClipper(viewer);
+    }
 
-        clipper.enabled = true;
-    }   
+    const adjustIndex = async (value: number) => {
+
+        if (clipper && crv) {
+
+            let t = value / 100
+
+            let cenPt = crv.getPointAt(t)
+            let tangent = crv.getTangentAt(t)
+
+            clipper.deleteAll()
+            clipper.createFromNormalAndCoplanarPoint(tangent, cenPt)
+        }
+    }
 
 
     const drawAxis = async (modelMatrix: THREE.Matrix4) => {
 
-        const material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-        const points = [];
-        
-        for (let i = 0; i < pointsData.length; i++){ 
-            points.push( new THREE.Vector3(pointsData[i].x + modelMatrix.elements[12], pointsData[i].z + modelMatrix.elements[13], -(pointsData[i].y - modelMatrix.elements[14])) );  
+        let newPoints = []
+
+        for (let i = 0; i < pointsData.length; i++) {
+            newPoints.push(new THREE.Vector3(pointsData[i].x + modelMatrix.elements[12], pointsData[i].z + modelMatrix.elements[13], -(pointsData[i].y - modelMatrix.elements[14])));
         }
 
-        let geometry = new THREE.BufferGeometry().setFromPoints( points );
-        
-        const line = new THREE.Line( geometry, material );
+        const curve = new THREE.CatmullRomCurve3(newPoints)
+        setCrv(curve)
+
+        const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+        let geometry = new THREE.BufferGeometry().setFromPoints(newPoints);
+        const line = new THREE.Line(geometry, material);
+
         viewer.scene.get().add(line)
     }
 
 
     viewer = new OBC.Components()
     React.useEffect(() => {
-        
+
         createViewer()
 
         return () => {
 
             viewer.dispose()
             setViewer(null)
+
         }
     }, [])
 
+    const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newIndex = Number(event.target.value);
+        setIndex(newIndex);
+        adjustIndex(newIndex);
+    };
+
     return (
+
         <div
             id="viewer-container"
             className="dashboard-card"
             style={{ minWidth: 0, position: "relative", height: "100vh" }}
-        />
+        >
+            <input
+                type="range"
+                min="0"
+                max="100"
+                value={index}
+                onChange={handleSliderChange}
+                style={{ position: "absolute", bottom: 20, left: "20%", transform: "translateX(-50%)" }}
+            />
+        </div>
     )
 }
