@@ -1,5 +1,7 @@
 import * as React from "react"
 import * as OBC from "openbim-components"
+import * as THREE from "three"
+import { FragmentsGroup, IfcProperties, Fragment } from "bim-fragment"  
 
 interface Props {
     
@@ -71,27 +73,53 @@ export function IFCViewer(props: Props) {
         const ifcLoader = new OBC.FragmentIfcLoader(viewer)
         await ifcLoader.setup()
 
-        const highlighter = new OBC.FragmentHighlighter(viewer)
-        await highlighter.setup()
+       
 
         const culler = new OBC.ScreenCuller(viewer)
         await culler.setup()
         cameraComponent.controls.addEventListener("sleep", () => culler.needsUpdate = true)
 
         const propertiesProcessor = new OBC.IfcPropertiesProcessor(viewer)
-        highlighter.events.select.onClear.add(() => {
-        propertiesProcessor.cleanPropertiesList()
-        })
+       
+
+        const clipper = new OBC.EdgesClipper(viewer);
+
+        clipper.enabled = true;
+
+        
 
         ifcLoader.onIfcLoaded.add(async model => {
+            console.log(model)
             for (const fragment of model.items) { culler.add(fragment.mesh) }
             propertiesProcessor.process(model)
-            highlighter.events.select.onHighlight.add((selection) => {
-                const fragmentID = Object.keys(selection)[0]
-                const expressID = Number([...selection[fragmentID]][0])
-                propertiesProcessor.renderProperties(model, expressID)
-            })
-            highlighter.update()
+                
+                const shapeFill = new THREE.MeshBasicMaterial({color: 'lightgray', side: 2});
+                const shapeLine = new THREE.LineBasicMaterial({ color: 'black' });
+                const shapeOutline = new THREE.MeshBasicMaterial({color: 'black', opacity: 0.2, side: 2, transparent: true});
+                const meshes = viewer.meshes
+                console.log(meshes)
+                console.log(meshes.length)
+                
+                clipper.styles.create('White shape, black lines', new Set(meshes), shapeLine, shapeFill, shapeOutline);
+                
+                /* Each Shape different Color
+                for(let i=0; i++; i <= meshes.length){
+                    const mesh = meshes[i]
+                    console.log(mesh)
+                    const materials = mesh.material as THREE.Material[]
+                    const material = materials[0] as THREE.MeshLambertMaterial
+                    const color = material.color
+                    const shapeFill = new THREE.MeshBasicMaterial({color: "white", side: 2});
+                    console.log(shapeFill)
+                    const shapeLine = new THREE.LineBasicMaterial({ color: color });
+                    console.log(shapeLine)
+                    const shapeOutline = new THREE.MeshBasicMaterial({color: color, opacity: 0.2, side: 2, transparent: true});
+                    console.log(shapeOutline)
+                    clipper.styles.create(`${i.toString}`, new Set([mesh]), shapeLine, shapeFill, shapeOutline);
+
+                }
+                */
+           
             culler.needsUpdate = true
         })
 
@@ -106,10 +134,13 @@ export function IFCViewer(props: Props) {
 
         viewer.ui.addToolbar(mainToolbar)
 
-        //const scene = sceneComponent.get()
-        const clipper = new OBC.EdgesClipper(viewer);
+        viewerContainer.ondblclick = () => clipper.create();
+        console.log(clipper)
 
-        clipper.enabled = true;
+        //const scene = sceneComponent.get()
+        
+
+        
 
         
     }
