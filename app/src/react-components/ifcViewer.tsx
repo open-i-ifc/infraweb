@@ -1,8 +1,13 @@
 import * as React from "react"
 import * as OBC from "openbim-components"
+<<<<<<< HEAD
 import * as THREE from "three"
 import { FragmentsGroup, IfcProperties, Fragment } from "bim-fragment"  
 
+=======
+import { AlignTool } from "../openbim-tools/align"
+import { FragmentsGroup } from "bim-fragment"
+>>>>>>> 1b4cb60fc1de234a841dce28b2740c9009298900
 interface Props {
     
 }
@@ -88,8 +93,17 @@ export function IFCViewer(props: Props) {
 
         
 
+<<<<<<< HEAD
         ifcLoader.onIfcLoaded.add(async model => {
             console.log(model)
+=======
+        async function onModelLoaded(model: FragmentsGroup) {
+            alignTool.setModel(model)
+        }
+
+
+        ifcLoader.onIfcLoaded.add(async (model) => {
+>>>>>>> 1b4cb60fc1de234a841dce28b2740c9009298900
             for (const fragment of model.items) { culler.add(fragment.mesh) }
             propertiesProcessor.process(model)
                 
@@ -121,16 +135,20 @@ export function IFCViewer(props: Props) {
                 */
            
             culler.needsUpdate = true
+            onModelLoaded(model)
         })
 
         
+        const alignTool = new AlignTool(viewer)
 
         const mainToolbar = new OBC.Toolbar(viewer)
         mainToolbar.addChild(
-        ifcLoader.uiElement.get("main"),
-        propertiesProcessor.uiElement.get("main")
-        
+            ifcLoader.uiElement.get("main"),
+            propertiesProcessor.uiElement.get("main"),
+            alignTool.uiElement.get("activationBtn")
         )
+
+        
 
         viewer.ui.addToolbar(mainToolbar)
 
@@ -142,7 +160,9 @@ export function IFCViewer(props: Props) {
 
         
 
-        
+
+
+
     }
 
     viewer = new OBC.Components()
