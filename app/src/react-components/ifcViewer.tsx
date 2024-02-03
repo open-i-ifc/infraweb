@@ -7,6 +7,8 @@ import { AlignTool } from "../openbim-tools/align"
 import { FragmentsGroup } from "bim-fragment"
 import { threadId } from "worker_threads"
 import { useState } from "react"
+import {Vector3} from "three";
+import {reflectVector} from "three/examples/jsm/nodes/accessors/ReflectVectorNode";
 
 interface Props {
     
@@ -46,7 +48,7 @@ export function IFCViewer(props: Props) {
     let [index, setIndex] = useState(50)
     const [crv, setCrv] = useState<THREE.CatmullRomCurve3 | null>(null);
     const [clipper, setClipper] = useState<OBC.EdgesClipper | null>(null);
-
+    const [secondCamera, setSecondCamera] = useState<OBC.OrthoPerspectiveCamera| null>(null)
     // const fetched = await fetch("file/url");
     // const arrayBuffer = await fetched.arrayBuffer();
     // const buffer = new Uint8Array(arrayBuffer);
@@ -81,24 +83,12 @@ export function IFCViewer(props: Props) {
         const cameraComponent = new OBC.OrthoPerspectiveCamera(viewer)
         viewer.camera = cameraComponent
 
-        function updateCameraPosition(cameraComponent: OBC.OrthoPerspectiveCamera, position: THREE.Points, target: THREE.Points){
 
-            cameraComponent.controls.setPosition(position.position.x,position.position.y, position.position.z, false)
-            cameraComponent.controls.setTarget(target.position.x, target.position.y, target.position.z)
-
-            //cameraComponent.get(OBC.)
-            const projectionType = cameraComponent.getProjection() as OBC.CameraProjection
-            console.log(projectionType)
-            //if(projectionType)
-            if(cameraComponent.activeCamera.toString() === "THREE.PerspectiveCamera")
-                cameraComponent.get().far = .1
-            //cameraComponent.activeCamera = "PerspectiveCamera"
-        }
 
         const position = new THREE.Points()
         const target = new THREE.Points()
 
-        updateCameraPosition(cameraComponent, position, target)
+        //(cameraComponent, position, target)
 
 
 
@@ -112,6 +102,8 @@ export function IFCViewer(props: Props) {
         /////////////////
 
         const flatCamera = new OBC.OrthoPerspectiveCamera(viewer)
+        await flatCamera.setProjection("Orthographic")
+        setSecondCamera((flatCamera))
         const viewerContainer2 = document.getElementById("viewer-container2") as HTMLDivElement
         const renderComponent2 = new OBC.SimpleRenderer(viewer,viewerContainer2 )
         flatCamera.controls.setLookAt(0,10,0,0,0,0)
@@ -214,6 +206,23 @@ export function IFCViewer(props: Props) {
         // viewerContainer.ondblclick = () => clipper.create();
     }
 
+    function updateCameraPosition(cameraComponent: OBC.OrthoPerspectiveCamera, position: THREE.Vector3, target: THREE.Vector3){
+
+            cameraComponent.controls.setPosition(position.x,position.y, position.z, false)
+            cameraComponent.controls.setTarget(target.x, target.y, target.z)
+
+            //cameraComponent.get(OBC.)
+            const projectionType = cameraComponent.getProjection() as OBC.CameraProjection
+            console.log(projectionType)
+            //if(projectionType)
+            //if(cameraComponent.activeCamera.toString() === "THREE.PerspectiveCamera")
+              //  cameraComponent.get().far = .1
+            //cameraComponent.activeCamera = "PerspectiveCamera"
+
+            cameraComponent.controls.update(1)
+
+    }
+
     const adjustIndex = async (value: number) => {
 
         if (clipper && crv) {
@@ -223,9 +232,17 @@ export function IFCViewer(props: Props) {
             let cenPt = crv.getPointAt(t)
             let tangent = crv.getTangentAt(t)
 
+
             clipper.deleteAll()
             clipper.createFromNormalAndCoplanarPoint(tangent, cenPt)
+            clipper.visible = false
+            let startPt = new THREE.Vector3(cenPt.x-tangent.x*10,cenPt.y-tangent.y,cenPt.z-tangent.z*10)
+            console.log(startPt,cenPt,tangent)
+            updateCameraPosition(secondCamera!,startPt, cenPt)
         }
+
+
+
     }
 
 
