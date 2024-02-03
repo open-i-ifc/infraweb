@@ -62,11 +62,12 @@ export function IFCViewer(props: Props) {
         setViewer(viewer)
         
         const sceneComponent = new OBC.SimpleScene(viewer)
-        sceneComponent.setup()
+        await sceneComponent.setup()
         viewer.scene = sceneComponent
         scene = sceneComponent.get()
         scene.background = null
-        const viewerContainer = document.getElementById("viewer-container") as HTMLDivElement
+        const viewerContainer = document.getElementById("viewer-container1") as HTMLDivElement
+        console.log(viewerContainer)
         const rendererComponent = new OBC.PostproductionRenderer(viewer, viewerContainer)
         // const rendererComponent = new OBC.SimpleRenderer(viewer, viewerContainer)
 
@@ -75,7 +76,7 @@ export function IFCViewer(props: Props) {
 
         renderer.setPixelRatio(window.devicePixelRatio);
 
-        viewer.renderer = rendererComponent as unknown as OBC.SimpleRenderer
+        viewer.renderer = rendererComponent
 
         const cameraComponent = new OBC.OrthoPerspectiveCamera(viewer)
         viewer.camera = cameraComponent
@@ -103,11 +104,11 @@ export function IFCViewer(props: Props) {
 
         const raycasterComponent = new OBC.SimpleRaycaster(viewer)
         viewer.raycaster = raycasterComponent
-        
+        await viewer.init()
+
         const grid = new OBC.SimpleGrid(viewer);
         renderer.shadowMap.enabled = true;
 
-        viewer.init()
         /////////////////
 
         const flatCamera = new OBC.OrthoPerspectiveCamera(viewer)
@@ -163,7 +164,7 @@ export function IFCViewer(props: Props) {
                 console.log(meshes)
                 console.log(meshes.length)
 
-                clipper.styles.create('White shape, black lines', new Set(meshes), shapeLine, shapeFill, shapeOutline);
+                // clipper.styles.create('White shape, black lines', new Set(meshes), shapeLine, shapeFill, shapeOutline);
 
                 /* Each Shape different Color
                 for(let i=0; i++; i <= meshes.length){
@@ -208,9 +209,9 @@ export function IFCViewer(props: Props) {
         viewer.ui.addToolbar(mainToolbar)
 
         //const scene = sceneComponent.get()
-        const clipper = new OBC.EdgesClipper(  viewer );
-     clipper.enabled = true;
-        viewerContainer.ondblclick = () => clipper.create();
+        // const clipper = new OBC.EdgesClipper(  viewer );
+        // clipper.enabled = true;
+        // viewerContainer.ondblclick = () => clipper.create();
     }
 
     const adjustIndex = async (value: number) => {
