@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 import * as React from "react"
 import * as OBC from "openbim-components"
 import { AlignTool } from "../openbim-tools/align"
