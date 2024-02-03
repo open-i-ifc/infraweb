@@ -48,7 +48,7 @@ export function IFCViewer(props: Props) {
         viewer.scene = sceneComponent
         scene = sceneComponent.get()
         scene.background = null
-        const viewerContainer = document.getElementById("viewer-container") as HTMLDivElement
+        const viewerContainer = document.getElementById("viewer-container1") as HTMLDivElement
         //const rendererComponent = new OBC.PostproductionRenderer(viewer, viewerContainer)
         const rendererComponent = new OBC.SimpleRenderer(viewer, viewerContainer)
 
@@ -71,7 +71,27 @@ export function IFCViewer(props: Props) {
 
 
         viewer.init()
-        
+        /////////////////
+
+        const flatCamera = new OBC.OrthoPerspectiveCamera(viewer)
+        const viewerContainer2 = document.getElementById("viewer-container2") as HTMLDivElement
+        const renderComponent2 = new OBC.SimpleRenderer(viewer,viewerContainer2 )
+        flatCamera.controls.setLookAt(0,10,0,0,0,0)
+        flatCamera.controls.update(1)
+        rendererComponent.onAfterUpdate.add(() => {
+            flatCamera.update(0)
+            renderComponent2.overrideCamera = flatCamera.get()
+            renderComponent2.update()
+        })
+        /* onAfterUpdate(() => {
+            
+
+        }) */
+
+
+
+
+        //////////////////
         const ifcLoader = new OBC.FragmentIfcLoader(viewer)
         await ifcLoader.setup()
 
@@ -168,10 +188,17 @@ export function IFCViewer(props: Props) {
       }, [])
 
     return (
+        <div style={{ display: "flex"}}>
         <div
-            id="viewer-container"
+            id="viewer-container1"
             className="dashboard-card"
-            style={{ minWidth: 0, position: "relative", height: "100vh"}}
+            style={{ minWidth: 0, position: "relative", height: "100vh", width: "50vw" }}
         />
+        <div
+            id="viewer-container2"
+            className="dashboard-card"
+            style={{ minWidth: 0, position: "relative", height: "100vh", width: "50vw" }}
+        />
+        </div>
     )
 }
