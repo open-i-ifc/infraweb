@@ -6,6 +6,8 @@ on:
       - main
 jobs:
   deploy:
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: ./app
