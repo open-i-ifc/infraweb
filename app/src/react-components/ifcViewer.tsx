@@ -1,6 +1,7 @@
 import * as React from "react"
 import * as OBC from "openbim-components"
-
+import { AlignTool } from "../openbim-tools/align"
+import { FragmentsGroup } from "bim-fragment"
 interface Props {
     
 }
@@ -83,7 +84,12 @@ export function IFCViewer(props: Props) {
         propertiesProcessor.cleanPropertiesList()
         })
 
-        ifcLoader.onIfcLoaded.add(async model => {
+        async function onModelLoaded(model: FragmentsGroup) {
+            alignTool.setModel(model)
+        }
+
+
+        ifcLoader.onIfcLoaded.add(async (model) => {
             for (const fragment of model.items) { culler.add(fragment.mesh) }
             propertiesProcessor.process(model)
             highlighter.events.select.onHighlight.add((selection) => {
@@ -93,16 +99,20 @@ export function IFCViewer(props: Props) {
             })
             highlighter.update()
             culler.needsUpdate = true
+            onModelLoaded(model)
         })
 
         
+        const alignTool = new AlignTool(viewer)
 
         const mainToolbar = new OBC.Toolbar(viewer)
         mainToolbar.addChild(
-        ifcLoader.uiElement.get("main"),
-        propertiesProcessor.uiElement.get("main")
-        
+            ifcLoader.uiElement.get("main"),
+            propertiesProcessor.uiElement.get("main"),
+            alignTool.uiElement.get("activationBtn")
         )
+
+        
 
         viewer.ui.addToolbar(mainToolbar)
 
@@ -111,7 +121,9 @@ export function IFCViewer(props: Props) {
 
         clipper.enabled = true;
 
-        
+
+
+
     }
 
     viewer = new OBC.Components()
