@@ -1,13 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 import * as React from "react"
 import * as OBC from "openbim-components"
-<<<<<<< HEAD
 import * as THREE from "three"
-import { FragmentsGroup, IfcProperties, Fragment } from "bim-fragment"  
-
-=======
 import { AlignTool } from "../openbim-tools/align"
 import { FragmentsGroup } from "bim-fragment"
->>>>>>> 1b4cb60fc1de234a841dce28b2740c9009298900
 interface Props {
     
 }
@@ -78,32 +75,25 @@ export function IFCViewer(props: Props) {
         const ifcLoader = new OBC.FragmentIfcLoader(viewer)
         await ifcLoader.setup()
 
-       
+        const highlighter = new OBC.FragmentHighlighter(viewer)
+        await highlighter.setup()
 
         const culler = new OBC.ScreenCuller(viewer)
         await culler.setup()
         cameraComponent.controls.addEventListener("sleep", () => culler.needsUpdate = true)
 
         const propertiesProcessor = new OBC.IfcPropertiesProcessor(viewer)
-       
+        highlighter.events.select.onClear.add(() => {
+        propertiesProcessor.cleanPropertiesList()
+        })
 
-        const clipper = new OBC.EdgesClipper(viewer);
-
-        clipper.enabled = true;
-
-        
-
-<<<<<<< HEAD
-        ifcLoader.onIfcLoaded.add(async model => {
-            console.log(model)
-=======
         async function onModelLoaded(model: FragmentsGroup) {
             alignTool.setModel(model)
         }
 
 
         ifcLoader.onIfcLoaded.add(async (model) => {
->>>>>>> 1b4cb60fc1de234a841dce28b2740c9009298900
+            console.log(model)
             for (const fragment of model.items) { culler.add(fragment.mesh) }
             propertiesProcessor.process(model)
                 
@@ -136,6 +126,8 @@ export function IFCViewer(props: Props) {
            
             culler.needsUpdate = true
             onModelLoaded(model)
+            culler.needsUpdate = true
+            onModelLoaded(model)
         })
 
         
@@ -152,13 +144,12 @@ export function IFCViewer(props: Props) {
 
         viewer.ui.addToolbar(mainToolbar)
 
-        viewerContainer.ondblclick = () => clipper.create();
-        console.log(clipper)
-
         //const scene = sceneComponent.get()
-        
+        const clipper = new OBC.EdgesClipper(viewer);
 
-        
+        clipper.enabled = true;
+        viewerContainer.ondblclick = () => clipper.create();
+
 
 
 
