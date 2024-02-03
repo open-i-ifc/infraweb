@@ -24,13 +24,13 @@ jobs:
         run: npm run build
         working-directory: ./app
       - name: Debug
-        run: pwd && cd ./app && ls -la
+        run: pwd && cd ./app/build && ls -la
 
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: /app/build
+          publish_dir: ./app/build
           user_name: github-actions[bot]
           user_email: 41898282+github-actions[bot]@users.noreply.github.com
