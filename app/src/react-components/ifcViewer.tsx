@@ -14,10 +14,12 @@ interface IViewerContext {
     setViewer: (viewer: OBC.Components | null) => void
 }
 
+
 export const ViewerContext = React.createContext<IViewerContext>({
     viewer: null,
     setViewer: () => { }
 })
+
 
 export function ViewerProvider(props: { children: React.ReactNode }) {
     const [viewer, setViewer] = React.useState<OBC.Components | null>(null)
@@ -31,8 +33,6 @@ export function ViewerProvider(props: { children: React.ReactNode }) {
 }
 
 
-
-
 export function IFCViewer(props: Props) {
 
     const { setViewer } = React.useContext(ViewerContext)
@@ -41,7 +41,7 @@ export function IFCViewer(props: Props) {
 
     const createViewer = async () => {
 
-        
+        let modelMatrix: THREE.Matrix4
 
         viewer = new OBC.Components()
         setViewer(viewer)
@@ -58,9 +58,7 @@ export function IFCViewer(props: Props) {
         const renderer = rendererComponent.get()
         console.log(renderer)
 
-
         renderer.setPixelRatio(window.devicePixelRatio);
-
 
         viewer.renderer = rendererComponent as unknown as OBC.SimpleRenderer
 
@@ -73,13 +71,11 @@ export function IFCViewer(props: Props) {
         const grid = new OBC.SimpleGrid(viewer);
         renderer.shadowMap.enabled = true;
 
-
         viewer.init()
 
         const ifcLoader = new OBC.FragmentIfcLoader(viewer)
         await ifcLoader.setup()
         console.log(ifcLoader)
-        
 
         // const highlighter = new OBC.FragmentHighlighter(viewer)
         // await highlighter.setup()
@@ -97,9 +93,10 @@ export function IFCViewer(props: Props) {
             alignTool.setModel(model)
         }
 
-
         ifcLoader.onIfcLoaded.add(async (model) => {
-            console.log(model)
+            modelMatrix = model.coordinationMatrix
+            drawAxis(modelMatrix)
+
             for (const fragment of model.items) { culler.add(fragment.mesh) }
             propertiesProcessor.process(model)
             // highlighter.events.select.onHighlight.add((selection) => {
@@ -112,20 +109,6 @@ export function IFCViewer(props: Props) {
             onModelLoaded(model)
         })
 
-
-
-        const material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-        const points = [];
-        let sum_x = 0
-        let sum_y = 0
-        let sum_z = 0
-        for (let i = 0; i < pointsData.length; i++){ 
-            points.push( new THREE.Vector3(pointsData[i].x -2684701.800410231, pointsData[i].z - 408.75468826956893 , -(pointsData[i].y - 1245421.946595616)) );  
-        }
-
-        const geometry = new THREE.BufferGeometry().setFromPoints( points );
-        const line = new THREE.Line( geometry, material );
-        scene.add(line)
 
         const alignTool = new AlignTool(viewer)
 
@@ -142,11 +125,28 @@ export function IFCViewer(props: Props) {
         const clipper = new OBC.EdgesClipper(viewer);
 
         clipper.enabled = true;
+    }   
+
+
+    const drawAxis = async (modelMatrix: THREE.Matrix4) => {
+
+        const material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+        const points = [];
         
+        for (let i = 0; i < pointsData.length; i++){ 
+            points.push( new THREE.Vector3(pointsData[i].x + modelMatrix.elements[12], pointsData[i].z + modelMatrix.elements[13], -(pointsData[i].y - modelMatrix.elements[14])) );  
+        }
+
+        let geometry = new THREE.BufferGeometry().setFromPoints( points );
+        
+        const line = new THREE.Line( geometry, material );
+        viewer.scene.get().add(line)
     }
+
 
     viewer = new OBC.Components()
     React.useEffect(() => {
+        
         createViewer()
 
         return () => {
