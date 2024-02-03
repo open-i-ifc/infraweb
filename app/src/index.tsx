@@ -21,7 +21,8 @@ root.render(
       <Router.Routes>
         <Router.Route path="/ifc" element={<IFCViewer />}></Router.Route>
         <Router.Route path="/" element={<IFCViewer />}></Router.Route>
-        
+        <Router.Route path="/infraweb" element={<IFCViewer />}></Router.Route>
+
       </Router.Routes>
       </ViewerProvider>
     </Router.BrowserRouter>
