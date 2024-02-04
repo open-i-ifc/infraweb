@@ -22,7 +22,7 @@ interface IViewerContext {
 }
 
 export const ViewerContext = React.createContext<IViewerContext>({
-    viewer: null, 
+    viewer: null,
     setViewer: () => { }
 })
 
@@ -51,6 +51,8 @@ export function IFCViewer(props: Props) {
     const [crv, setCrv] = useState<THREE.CatmullRomCurve3 | null>(null);
     const [clipper, setClipper] = useState<OBC.EdgesClipper | null>(null);
     const [secondCamera, setSecondCamera] = useState<OBC.OrthoPerspectiveCamera| null>(null)
+    const [firstCamera, setFirstCamera] = useState<OBC.OrthoPerspectiveCamera| null>(null)
+    const [prevClipperPos, setPrevClipperPos] = useState<THREE.Vector3 | null>(null)
     // const fetched = await fetch("file/url");
     // const arrayBuffer = await fetched.arrayBuffer();
     // const buffer = new Uint8Array(arrayBuffer);
@@ -64,7 +66,7 @@ export function IFCViewer(props: Props) {
 
         viewer = new OBC.Components()
         setViewer(viewer)
-        
+
         const sceneComponent = new OBC.SimpleScene(viewer)
         await sceneComponent.setup()
         viewer.scene = sceneComponent
@@ -79,13 +81,12 @@ export function IFCViewer(props: Props) {
         console.log(renderer)
 
         renderer.setPixelRatio(window.devicePixelRatio);
-                
+
         viewer.renderer = rendererComponent
-        
+
         const cameraComponent = new OBC.OrthoPerspectiveCamera(viewer)
         viewer.camera = cameraComponent
-
-        
+        setFirstCamera((cameraComponent))
 
         const position = new THREE.Points()
         const target = new THREE.Points()
@@ -93,7 +94,7 @@ export function IFCViewer(props: Props) {
         //(cameraComponent, position, target)
 
 
-    
+
         const raycasterComponent = new OBC.SimpleRaycaster(viewer)
         viewer.raycaster = raycasterComponent
         await viewer.init()
@@ -115,7 +116,10 @@ export function IFCViewer(props: Props) {
             renderComponent2.overrideCamera = flatCamera.get()
             renderComponent2.update()
         })
+        /* onAfterUpdate(() => {
 
+
+        }) */
 
 
 
@@ -147,16 +151,16 @@ export function IFCViewer(props: Props) {
 
             for (const fragment of model.items) { culler.add(fragment.mesh) }
             propertiesProcessor.process(model)
-                
+
                 const shapeFill = new THREE.MeshBasicMaterial({color: 'lightgray', side: 2});
                 const shapeLine = new THREE.LineBasicMaterial({ color: 'black' });
                 const shapeOutline = new THREE.MeshBasicMaterial({color: 'black', opacity: 0.2, side: 2, transparent: true});
                 const meshes = viewer.meshes
                 console.log(meshes)
                 console.log(meshes.length)
-                
+
                 // clipper.styles.create('White shape, black lines', new Set(meshes), shapeLine, shapeFill, shapeOutline);
-                
+
                 /* Each Shape different Color
                 for(let i=0; i++; i <= meshes.length){
                     const mesh = meshes[i]
@@ -174,10 +178,10 @@ export function IFCViewer(props: Props) {
 
                 }
                 */
-           
+
             culler.needsUpdate = true
             onModelLoaded(model)
-            
+
             const localClipper = new OBC.EdgesClipper(viewer);
 
             localClipper.enabled = true;
@@ -273,9 +277,9 @@ export function IFCViewer(props: Props) {
 
         //const scene = sceneComponent.get()
         // const clipper = new OBC.EdgesClipper(  viewer );
-// clipper.enabled = true;
+        // clipper.enabled = true;
         // viewerContainer.ondblclick = () => clipper.create();
-}
+    }
 
     function updateCameraPosition(cameraComponent: OBC.OrthoPerspectiveCamera, position: THREE.Vector3, target: THREE.Vector3){
 
@@ -298,6 +302,8 @@ export function IFCViewer(props: Props) {
 
         if (clipper && crv) {
 
+            let prev_cam_pos = firstCamera!.controls.getPosition(new THREE.Vector3())
+            let prev_clipper_pos = prevClipperPos
             let t = value / 100
 
             let cenPt = crv.getPointAt(t)
@@ -308,8 +314,16 @@ export function IFCViewer(props: Props) {
             clipper.createFromNormalAndCoplanarPoint(tangent, cenPt)
             clipper.visible = false
             let startPt = new THREE.Vector3(cenPt.x-tangent.x*10,cenPt.y-tangent.y,cenPt.z-tangent.z*10)
+
+            let m_vec = new THREE.Vector3().subVectors(cenPt,prev_clipper_pos!)
+
+            let new_cam_pos = new THREE.Vector3().addVectors(prev_cam_pos,m_vec)
+
+            setPrevClipperPos(cenPt)
+
             console.log(startPt,cenPt,tangent)
             updateCameraPosition(secondCamera!,startPt, cenPt)
+            updateCameraPosition(firstCamera!,new_cam_pos, cenPt)
         }
 
 
@@ -329,6 +343,7 @@ export function IFCViewer(props: Props) {
 
         const curve = new THREE.CatmullRomCurve3(newPoints)
         setCrv(curve)
+        setPrevClipperPos(curve.getPointAt(0.5))
 
         const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
         let geometry = new THREE.BufferGeometry().setFromPoints(newPoints);
@@ -341,15 +356,15 @@ export function IFCViewer(props: Props) {
     viewer = new OBC.Components()
     React.useEffect(() => {
         createViewer()
-        
+
         return () => {
-            
+
             viewer.dispose()
             setViewer(null)
         }
-      }, [])
+    }, [])
 
-const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newIndex = Number(event.target.value);
         setIndex(newIndex);
         adjustIndex(newIndex);
@@ -369,9 +384,9 @@ const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
                 max="100"
                 value={index}
                 onChange={handleSliderChange}
-                style={{ position: "absolute", bottom: 20, left: "20%", transform: "translateX(-50%)" }}
+                style={{ position: "absolute", top: 20, left: "50%",width: "80%", transform: "translateX(-50%)"}}
             />
-</div>
+        </div>
         <div
             id="viewer-container2"
             className="dashboard-card"
