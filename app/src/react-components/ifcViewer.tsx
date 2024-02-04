@@ -149,15 +149,14 @@ export function IFCViewer(props: Props) {
 
             localClipper.enabled = true;
 
-            const shapeFill = new THREE.MeshBasicMaterial({color: 'black', side: 2});
+            const shapeFill = new THREE.MeshBasicMaterial({color: 'black', side: 2, opacity: 0, transparent: true});
             const shapeLine = new THREE.LineBasicMaterial({ color: 'black' });
             const shapeOutline = new THREE.MeshBasicMaterial({color: 'black', opacity: 0.2, side: 2, transparent: true});
             const meshes = viewer.meshes
             console.log(meshes)
             console.log(meshes.length)
 
-            // disabled, as there are artifacts within the clippers
-            //localClipper.styles.create('White shape, black lines', new Set(meshes), shapeLine, shapeFill, shapeOutline);
+            localClipper.styles.create('White shape, black lines', new Set(meshes), shapeLine, shapeFill, shapeOutline);
 
             setClipper(localClipper)
         }
