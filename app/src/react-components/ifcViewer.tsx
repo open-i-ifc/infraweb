@@ -137,13 +137,21 @@ export function IFCViewer(props: Props) {
         })
 
         async function onModelLoaded(model: FragmentsGroup) {
+            console.log("Model loaded")
+            modelMatrix = model.coordinationMatrix
+            await drawAxis(modelMatrix)
             alignTool.setModel(model)
+            const localClipper = new OBC.EdgesClipper(viewer);
+
+            localClipper.enabled = true;
+
+            setClipper(localClipper)
         }
 
 
         ifcLoader.onIfcLoaded.add(async (model) => {
-            modelMatrix = model.coordinationMatrix
-            await drawAxis(modelMatrix)
+            
+            
 
             for (const fragment of model.items) { culler.add(fragment.mesh) }
             propertiesProcessor.process(model)
@@ -178,11 +186,7 @@ export function IFCViewer(props: Props) {
             culler.needsUpdate = true
             onModelLoaded(model)
             
-            const localClipper = new OBC.EdgesClipper(viewer);
-
-            localClipper.enabled = true;
-
-            setClipper(localClipper)
+            
 
         })
         
@@ -206,7 +210,7 @@ export function IFCViewer(props: Props) {
             
             viewer.scene.get().add(group);
             //highlighter.update();
-
+            onModelLoaded(group)
           })
           input.addEventListener('change', () => {
             const filesList = input.files
@@ -216,6 +220,7 @@ export function IFCViewer(props: Props) {
           })
           input.click()
           console.log("Loaded!")
+          
         })
         
         function  exportFragments(model: FragmentsGroup) {
@@ -320,7 +325,7 @@ export function IFCViewer(props: Props) {
     const drawAxis = async (modelMatrix: THREE.Matrix4) => {
 
 
-
+        console.log("Drawing axis")
         let newPoints = []
 
         for (let i = 0; i < pointsData.length; i++) {
@@ -333,7 +338,7 @@ export function IFCViewer(props: Props) {
         const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
         let geometry = new THREE.BufferGeometry().setFromPoints(newPoints);
         const line = new THREE.Line(geometry, material);
-
+        console.log(geometry)
         viewer.scene.get().add(line)
     }
 
