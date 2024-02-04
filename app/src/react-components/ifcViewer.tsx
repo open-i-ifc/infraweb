@@ -74,8 +74,8 @@ export function IFCViewer(props: Props) {
         scene.background = null
         const viewerContainer = document.getElementById("viewer-container1") as HTMLDivElement
         console.log(viewerContainer)
-        const rendererComponent = new OBC.PostproductionRenderer(viewer, viewerContainer)
-        // const rendererComponent = new OBC.SimpleRenderer(viewer, viewerContainer)
+        //const rendererComponent = new OBC.PostproductionRenderer(viewer, viewerContainer)
+        const rendererComponent = new OBC.SimpleRenderer(viewer, viewerContainer)
 
         const renderer = rendererComponent.get()
         console.log(renderer)
@@ -149,6 +149,15 @@ export function IFCViewer(props: Props) {
 
             localClipper.enabled = true;
 
+            const shapeFill = new THREE.MeshBasicMaterial({color: 'lightgray', side: 2});
+            const shapeLine = new THREE.LineBasicMaterial({ color: 'black' });
+            const shapeOutline = new THREE.MeshBasicMaterial({color: 'black', opacity: 0.2, side: 2, transparent: true});
+            const meshes = viewer.meshes
+            console.log(meshes)
+            console.log(meshes.length)
+
+            localClipper.styles.create('White shape, black lines', new Set(meshes), shapeLine, shapeFill, shapeOutline);
+
             setClipper(localClipper)
         }
 
@@ -159,15 +168,6 @@ export function IFCViewer(props: Props) {
 
             for (const fragment of model.items) { culler.add(fragment.mesh) }
             propertiesProcessor.process(model)
-
-                const shapeFill = new THREE.MeshBasicMaterial({color: 'lightgray', side: 2});
-                const shapeLine = new THREE.LineBasicMaterial({ color: 'black' });
-                const shapeOutline = new THREE.MeshBasicMaterial({color: 'black', opacity: 0.2, side: 2, transparent: true});
-                const meshes = viewer.meshes
-                console.log(meshes)
-                console.log(meshes.length)
-
-                // clipper.styles.create('White shape, black lines', new Set(meshes), shapeLine, shapeFill, shapeOutline);
 
                 /* Each Shape different Color
                 for(let i=0; i++; i <= meshes.length){
