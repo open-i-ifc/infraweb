@@ -22,7 +22,7 @@ interface IViewerContext {
 }
 
 export const ViewerContext = React.createContext<IViewerContext>({
-    viewer: null,
+    viewer: null, 
     setViewer: () => { }
 })
 
@@ -37,6 +37,8 @@ export function ViewerProvider(props: { children: React.ReactNode }) {
         </ViewerContext.Provider >
     )
 }
+
+
 
 
 export function IFCViewer(props: Props) {
@@ -77,13 +79,13 @@ export function IFCViewer(props: Props) {
         console.log(renderer)
 
         renderer.setPixelRatio(window.devicePixelRatio);
-
+                
         viewer.renderer = rendererComponent
-
+        
         const cameraComponent = new OBC.OrthoPerspectiveCamera(viewer)
         viewer.camera = cameraComponent
 
-
+        
 
         const position = new THREE.Points()
         const target = new THREE.Points()
@@ -91,11 +93,11 @@ export function IFCViewer(props: Props) {
         //(cameraComponent, position, target)
 
 
-
+    
         const raycasterComponent = new OBC.SimpleRaycaster(viewer)
         viewer.raycaster = raycasterComponent
         await viewer.init()
-
+        const fragmentManager = new OBC.FragmentManager(viewer)
         const grid = new OBC.SimpleGrid(viewer);
         renderer.shadowMap.enabled = true;
 
@@ -113,10 +115,7 @@ export function IFCViewer(props: Props) {
             renderComponent2.overrideCamera = flatCamera.get()
             renderComponent2.update()
         })
-        /* onAfterUpdate(() => {
 
-
-        }) */
 
 
 
@@ -148,16 +147,16 @@ export function IFCViewer(props: Props) {
 
             for (const fragment of model.items) { culler.add(fragment.mesh) }
             propertiesProcessor.process(model)
-
+                
                 const shapeFill = new THREE.MeshBasicMaterial({color: 'lightgray', side: 2});
                 const shapeLine = new THREE.LineBasicMaterial({ color: 'black' });
                 const shapeOutline = new THREE.MeshBasicMaterial({color: 'black', opacity: 0.2, side: 2, transparent: true});
                 const meshes = viewer.meshes
                 console.log(meshes)
                 console.log(meshes.length)
-
+                
                 // clipper.styles.create('White shape, black lines', new Set(meshes), shapeLine, shapeFill, shapeOutline);
-
+                
                 /* Each Shape different Color
                 for(let i=0; i++; i <= meshes.length){
                     const mesh = meshes[i]
@@ -175,10 +174,10 @@ export function IFCViewer(props: Props) {
 
                 }
                 */
-
+           
             culler.needsUpdate = true
             onModelLoaded(model)
-
+            
             const localClipper = new OBC.EdgesClipper(viewer);
 
             localClipper.enabled = true;
@@ -186,14 +185,86 @@ export function IFCViewer(props: Props) {
             setClipper(localClipper)
 
         })
+        
 
+        const importFragmentBtn = new OBC.Button(viewer)
+        importFragmentBtn.materialIcon = "upload"
+        importFragmentBtn.tooltip = "Load FRAG"
+    
+        importFragmentBtn.onClick.add(() => {
+            console.log("Import FRAG")
+          const input = document.createElement('input')
+          input.type = 'file'
+          input.accept = '.frag'
+          const reader = new FileReader()
+          reader.addEventListener("load", async () => {
+            const binary = reader.result
+            if (!(binary instanceof ArrayBuffer)) { return }
+            const fragmentBinary = new Uint8Array(binary)
+            const group = await fragmentManager.load(fragmentBinary)
+
+            
+            viewer.scene.get().add(group);
+            //highlighter.update();
+
+          })
+          input.addEventListener('change', () => {
+            const filesList = input.files
+            console.log(filesList)
+            if (!filesList) { return }
+            reader.readAsArrayBuffer(filesList[0])
+          })
+          input.click()
+          console.log("Loaded!")
+        })
+        
+        function  exportFragments(model: FragmentsGroup) {
+          const fragmentBinary = fragmentManager.export(model)
+          const blob = new Blob([fragmentBinary])
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `${model.name.replace(".ifc", "")}.frag`
+          a.click()
+          URL.revokeObjectURL(url)
+        }
+
+        const exportFragmentBtn = new OBC.Button(viewer)
+        exportFragmentBtn.materialIcon = "download"
+        exportFragmentBtn.tooltip = "Export FRAG"
+
+        exportFragmentBtn.onClick.add(() => {
+
+            const fragmentManager = viewer.tools.get(OBC.FragmentManager)
+            const fragments = fragmentManager
+            if(!fragments.groups.length) return;
+            const group = fragments.groups[0];
+            const data = fragments.export(group);
+            const blob = new Blob([data]);
+            const file = new File([blob], "3dfile.frag");
+            download(file);
+               
+            
+            
+        })
+
+        function download(file:any) {
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(file);
+            link.download = file.name;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        
         const alignTool = new AlignTool(viewer)
 
         const mainToolbar = new OBC.Toolbar(viewer)
         mainToolbar.addChild(
             ifcLoader.uiElement.get("main"),
-            propertiesProcessor.uiElement.get("main"),
-            alignTool.uiElement.get("activationBtn")
+            importFragmentBtn,
+            exportFragmentBtn
         )
 
         
@@ -202,9 +273,9 @@ export function IFCViewer(props: Props) {
 
         //const scene = sceneComponent.get()
         // const clipper = new OBC.EdgesClipper(  viewer );
-        // clipper.enabled = true;
+// clipper.enabled = true;
         // viewerContainer.ondblclick = () => clipper.create();
-    }
+}
 
     function updateCameraPosition(cameraComponent: OBC.OrthoPerspectiveCamera, position: THREE.Vector3, target: THREE.Vector3){
 
@@ -276,9 +347,9 @@ export function IFCViewer(props: Props) {
             viewer.dispose()
             setViewer(null)
         }
-    }, [])
+      }, [])
 
-    const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newIndex = Number(event.target.value);
         setIndex(newIndex);
         adjustIndex(newIndex);
@@ -300,7 +371,7 @@ export function IFCViewer(props: Props) {
                 onChange={handleSliderChange}
                 style={{ position: "absolute", bottom: 20, left: "20%", transform: "translateX(-50%)" }}
             />
-        </div>
+</div>
         <div
             id="viewer-container2"
             className="dashboard-card"
