@@ -397,6 +397,7 @@ export function IFCViewer(props: Props) {
             className="dashboard-card"
             style={{ minWidth: 0, position: "relative", height: "100vh", width: "50vw" }}
         />
+            <div style={{ position: "absolute", top: 0, right: 0, padding: '12px'}}><h1>Open I - The Simple IFC Clipper</h1></div>
         </div>
     )
 }
