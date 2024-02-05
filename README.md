@@ -1,6 +1,13 @@
-#infraweb
+# Team Infraweb
+## Entry for AEC Hackathon, February 2024 in Zurich
+## Members
+Lukas Fuhrimann, Lukas Merz, Adam Mounsey Timothy Sandy, Moritz Niebler, Ewa Lenart, Soroush Garivani, Tomasz Basinski, Mateusz Płoszaj-Mazurek, Nizar Taha, Szabolcs Veress and Goswin Rothenthal
 
-WIP
+![clipper](https://github.com/opensource-construction/infraweb/assets/17218693/cd4e2fb5-bc4c-43c5-8665-c4ac54e8357c)
+
+## Challenge
+https://github.com/Tugark/infraweb
+Main goal: Web-application to navigate along an axis and create 2D-Sections that can be visualized and exported directly in the browser.
 
 ## Deployment
 
