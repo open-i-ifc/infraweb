@@ -48,6 +48,7 @@ export function IFCViewer(props: Props) {
     let scene
 
     let [index, setIndex] = useState(50)
+    let mainModelLoaded = false
     const [crv, setCrv] = useState<THREE.CatmullRomCurve3 | null>(null);
     const [clipper, setClipper] = useState<OBC.EdgesClipper | null>(null);
     const [secondCamera, setSecondCamera] = useState<OBC.OrthoPerspectiveCamera| null>(null)
@@ -66,95 +67,106 @@ export function IFCViewer(props: Props) {
 
         viewer = new OBC.Components()
         setViewer(viewer)
-
+        //Create Scene
         const sceneComponent = new OBC.SimpleScene(viewer)
         await sceneComponent.setup()
         viewer.scene = sceneComponent
         scene = sceneComponent.get()
         scene.background = null
+
+        //Create viewer container
         const viewerContainer = document.getElementById("viewer-container1") as HTMLDivElement
-        console.log(viewerContainer)
+        //Create renderer component
+
         //const rendererComponent = new OBC.PostproductionRenderer(viewer, viewerContainer)
         const rendererComponent = new OBC.SimpleRenderer(viewer, viewerContainer)
-
         const renderer = rendererComponent.get()
-        console.log(renderer)
-
         renderer.setPixelRatio(window.devicePixelRatio);
-
         viewer.renderer = rendererComponent
+        renderer.shadowMap.enabled = true;
 
+        //Create camera component
         const cameraComponent = new OBC.OrthoPerspectiveCamera(viewer)
         viewer.camera = cameraComponent
+        cameraComponent.updateAspect()
         setFirstCamera((cameraComponent))
 
-        const position = new THREE.Points()
-        const target = new THREE.Points()
-
+        //const position = new THREE.Points()
+        //const target = new THREE.Points()
         //(cameraComponent, position, target)
 
 
+        //Create raycaster
+        //const raycasterComponent = new OBC.SimpleRaycaster(viewer)
+        //viewer.raycaster = raycasterComponent
 
-        const raycasterComponent = new OBC.SimpleRaycaster(viewer)
-        viewer.raycaster = raycasterComponent
+        //Initialize viewer
         await viewer.init()
+
+        //Create fragmentManager
         const fragmentManager = new OBC.FragmentManager(viewer)
         const grid = new OBC.SimpleGrid(viewer);
-        renderer.shadowMap.enabled = true;
+        
 
-        /////////////////
+        //Create second camera
 
         const flatCamera = new OBC.OrthoPerspectiveCamera(viewer)
         await flatCamera.setProjection("Orthographic")
         setSecondCamera((flatCamera))
-        const viewerContainer2 = document.getElementById("viewer-container2") as HTMLDivElement
-        const renderComponent2 = new OBC.SimpleRenderer(viewer,viewerContainer2 )
         flatCamera.controls.setLookAt(0,10,0,0,0,0)
         flatCamera.controls.update(1)
+        flatCamera.controls.dollySpeed = 0 // disable "zoom" for second camera
+
+        //create second viewer container
+        const viewerContainer2 = document.getElementById("viewer-container2") as HTMLDivElement
+
+        //create second render component
+        const renderComponent2 = new OBC.SimpleRenderer(viewer,viewerContainer2 )
+        
         rendererComponent.onAfterUpdate.add(() => {
-            flatCamera.update(0)
+            flatCamera.update(0) 
             renderComponent2.overrideCamera = flatCamera.get()
             renderComponent2.update()
         })
-        /* onAfterUpdate(() => {
-
-
-        }) */
 
 
 
 
-        //////////////////
+        //create ifc loader
         const ifcLoader = new OBC.FragmentIfcLoader(viewer)
         await ifcLoader.setup()
 
-        const highlighter = new OBC.FragmentHighlighter(viewer)
-        await highlighter.setup()
-
+        //create culler component
         const culler = new OBC.ScreenCuller(viewer)
         await culler.setup()
         cameraComponent.controls.addEventListener("sleep", () => culler.needsUpdate = true)
 
-        const propertiesProcessor = new OBC.IfcPropertiesProcessor(viewer)
-        highlighter.events.select.onClear.add(() => {
-        propertiesProcessor.cleanPropertiesList()
-        })
+        //create clipper
+        const localClipper = new OBC.EdgesClipper(viewer);
 
+        
+        //draw axis and create section materials
         async function onModelLoaded(model: FragmentsGroup) {
             console.log("Model loaded")
-            modelMatrix = model.coordinationMatrix
-            await drawAxis(modelMatrix)
-            alignTool.setModel(model)
-            const localClipper = new OBC.EdgesClipper(viewer);
+            console.log(model)
+            if(!mainModelLoaded)
+            {
+                modelMatrix = model.coordinationMatrix
+                await drawAxis(modelMatrix)
+            }
+            //alignTool.setModel(model)
 
             localClipper.enabled = true;
 
             const shapeFill = new THREE.MeshBasicMaterial({color: 'black', side: 2, opacity: 0, transparent: true});
             const shapeLine = new THREE.LineBasicMaterial({ color: 'black' });
             const shapeOutline = new THREE.MeshBasicMaterial({color: 'black', opacity: 0.2, side: 2, transparent: true});
+            
             const meshes = viewer.meshes
-            console.log(meshes)
-            console.log(meshes.length)
+
+            //let meshes2 = []
+            //for (const fragment of model.items) { meshes2.push(fragment.mesh) }
+            
 
             localClipper.styles.create('White shape, black lines', new Set(meshes), shapeLine, shapeFill, shapeOutline);
 
@@ -163,35 +175,9 @@ export function IFCViewer(props: Props) {
 
 
         ifcLoader.onIfcLoaded.add(async (model) => {
-
-
-
             for (const fragment of model.items) { culler.add(fragment.mesh) }
-            propertiesProcessor.process(model)
-
-                /* Each Shape different Color
-                for(let i=0; i++; i <= meshes.length){
-                    const mesh = meshes[i]
-                    console.log(mesh)
-                    const materials = mesh.material as THREE.Material[]
-                    const material = materials[0] as THREE.MeshLambertMaterial
-                    const color = material.color
-                    const shapeFill = new THREE.MeshBasicMaterial({color: "white", side: 2});
-                    console.log(shapeFill)
-                    const shapeLine = new THREE.LineBasicMaterial({ color: color });
-                    console.log(shapeLine)
-                    const shapeOutline = new THREE.MeshBasicMaterial({color: color, opacity: 0.2, side: 2, transparent: true});
-                    console.log(shapeOutline)
-                    clipper.styles.create(`${i.toString}`, new Set([mesh]), shapeLine, shapeFill, shapeOutline);
-
-                }
-                */
-
             culler.needsUpdate = true
             onModelLoaded(model)
-
-
-
         })
         
 
@@ -226,17 +212,6 @@ export function IFCViewer(props: Props) {
           console.log("Loaded!")
 
         })
-        
-        function  exportFragments(model: FragmentsGroup) {
-          const fragmentBinary = fragmentManager.export(model)
-          const blob = new Blob([fragmentBinary])
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `${model.name.replace(".ifc", "")}.frag`
-          a.click()
-          URL.revokeObjectURL(url)
-        }
 
         const exportFragmentBtn = new OBC.Button(viewer)
         exportFragmentBtn.materialIcon = "download"
@@ -318,7 +293,7 @@ export function IFCViewer(props: Props) {
             clipper.deleteAll()
             clipper.createFromNormalAndCoplanarPoint(tangent, cenPt)
             clipper.visible = false
-            let startPt = new THREE.Vector3(cenPt.x-tangent.x*10,cenPt.y-tangent.y,cenPt.z-tangent.z*10)
+            let startPt = new THREE.Vector3(cenPt.x-tangent.x*2,cenPt.y-tangent.y,cenPt.z-tangent.z*2)
 
             let m_vec = new THREE.Vector3().subVectors(cenPt,prev_clipper_pos!)
 
@@ -338,7 +313,7 @@ export function IFCViewer(props: Props) {
 
     const drawAxis = async (modelMatrix: THREE.Matrix4) => {
 
-
+        mainModelLoaded = true
         console.log("Drawing axis")
         let newPoints = []
 
