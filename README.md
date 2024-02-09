@@ -3,7 +3,8 @@
 ## Members
 Lukas Fuhrimann, Lukas Merz, Adam Mounsey Timothy Sandy, Moritz Niebler, Ewa Lenart, Soroush Garivani, Tomasz Basinski, Mateusz Płoszaj-Mazurek, Nizar Taha, Szabolcs Veress and Goswin Rothenthal
 
-![clipper](https://github.com/opensource-construction/infraweb/assets/17218693/cd4e2fb5-bc4c-43c5-8665-c4ac54e8357c)
+![infra](https://github.com/opensource-construction/infraweb/assets/17218693/ed198531-9e38-4829-937f-841c86e08ef0)
+
 
 ## Challenge
 https://github.com/Tugark/infraweb
