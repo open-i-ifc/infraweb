@@ -5,7 +5,7 @@ on:
     branches:
       - main
 jobs:
-  build:
+  deploy:
     permissions:
       contents: write
     name: Deploy to GitHub Pages
@@ -26,26 +26,9 @@ jobs:
       - name: Debug
         run: pwd && cd ./app/build && ls -la
 
-      - name: Uploading production-ready build files
-        uses: actions/upload-artifact@v2
-        with:
-          name: production-files
-          path: ./app/build
 
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Downloading artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: production-files
-          path: ./build
-
-      - name: Deploying to gh-pages
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+          publish_dir: ./app/build
