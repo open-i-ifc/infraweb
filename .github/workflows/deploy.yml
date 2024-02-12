@@ -3,7 +3,6 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - feature/fix-pipeline # todo: remove once pipeline works
       - main
 jobs:
   deploy:
