@@ -1,5 +1,5 @@
 {
-  "name": "InfraWeb",
+  "name": "infraweb",
   "version": "0.1.0",
   "private": true,
   "homepage": "infraweb",
@@ -16,7 +16,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0",
     "react-scripts": "5.0.1",
-    "three": "^0.161.0",
+    "three": "^0.160.1",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
