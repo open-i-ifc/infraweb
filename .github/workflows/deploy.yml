@@ -4,10 +4,14 @@ on:
   push:
     branches:
       - main
+
 jobs:
   build:
     name: Check Build
     uses: ./.github/workflows/build.yml
+    with:
+      store-artifact: true
+      artifact-name: built-app
 
   deploy:
     permissions:
@@ -17,6 +21,11 @@ jobs:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: built-app
+          path: ./build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

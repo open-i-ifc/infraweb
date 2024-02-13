@@ -1,5 +1,16 @@
 on:
   workflow_call:
+    inputs:
+      store-artifact:
+        description: 'Whether the built artifact should be stored'
+        default: false
+        required: false
+        type: boolean
+      artifact-name:
+        description: 'Name of the artifact, defaults to `built-app`'
+        default: built-app
+        required: false
+        type: string
 
 jobs:
   build:
@@ -15,3 +26,10 @@ jobs:
         run: npm ci
       - name: Build app
         run: npm run build
+      - name: Archive build artifacts
+        if: ${{ inputs.store-artifact }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ./build
+          retention-days: 3 # we only store these for 3 days because they're almost always immediately used
