@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/fix-pipeline-empty # todo: only for testing
 
 jobs:
   build:
